@@ -7,6 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// JwtAuthMiddleware is a middleware function that handles JWT-based authentication.
+// It checks the request for a valid JWT token
+// If valid, the request is passed to the next handler
 func JwtAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		err := TokenValid(c)
