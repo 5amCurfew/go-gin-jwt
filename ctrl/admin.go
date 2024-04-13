@@ -31,7 +31,7 @@ func GetTokenInfo(c *gin.Context) {
 		return
 	}
 
-	userID, _ := strconv.ParseUint(fmt.Sprintf("%.0f", claims["user_id"]), 10, 32)
+	userID, _ := strconv.ParseUint(fmt.Sprintf("%.0f", claims["sub"]), 10, 32)
 	user, err := models.GetUserByID(uint(userID))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
