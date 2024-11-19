@@ -15,8 +15,11 @@ import (
 // ///////////////////////////////////
 type User struct {
 	gorm.Model
-	Username string `gorm:"size:255;not null;unique" json:"username"`
-	Password string `gorm:"size:255;not null;" json:"password"`
+	Username  string `gorm:"size:255;not null;unique" json:"username"`
+	Password  string `gorm:"size:255;not null;" json:"password"`
+	IsAdmin   bool   `gorm:"default:false" json:"is_admin"`
+	CreatedAt int    `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt int    `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 func (u *User) Register() (*User, error) {
@@ -27,14 +30,15 @@ func (u *User) Register() (*User, error) {
 	return u, nil
 }
 
+// BeforeCreate Hook
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	u.Password = string(hashedPassword)
 	u.Username = html.EscapeString(strings.TrimSpace(u.Username))
+	u.Password = string(hashedPassword)
 
 	return nil
 }
@@ -51,7 +55,7 @@ func (candidate *User) Login() (string, error) {
 		return "", err
 	}
 
-	token, err := lib.GenerateToken(u.ID)
+	token, err := lib.GenerateToken(u.ID, u.IsAdmin)
 	if err != nil {
 		return "", err
 	}

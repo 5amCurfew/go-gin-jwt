@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -13,7 +12,7 @@ import (
 
 // GenerateToken generates a JWT token for the given user ID.
 // userID The ID of the user to generate the token for and returns the generated JWT token as a string, or an error if the token could not be generated.
-func GenerateToken(userID uint) (string, error) {
+func GenerateToken(userID uint, isAdmin bool) (string, error) {
 	lifespan, err := strconv.Atoi(os.Getenv("TOKEN_HOUR_LIFESPAN"))
 	if err != nil {
 		return "", err
@@ -21,6 +20,7 @@ func GenerateToken(userID uint) (string, error) {
 
 	claims := jwt.MapClaims{
 		"aut": true,
+		"adm": isAdmin,
 		"sub": userID,
 		"iat": time.Now().Unix(),
 		"exp": time.Now().Add(time.Hour * time.Duration(lifespan)).Unix(),
@@ -33,9 +33,6 @@ func GenerateToken(userID uint) (string, error) {
 // ParseToken parses the given JWT token string and returns the parsed token and any error that occurred during parsing.
 func ParseToken(t string) (*jwt.Token, error) {
 	return jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
 		return []byte(os.Getenv("API_SECRET")), nil
 	})
 }

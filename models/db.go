@@ -11,7 +11,7 @@ import (
 
 var db *gorm.DB
 
-func Connect() {
+func ConnectToAuthDatabase() {
 	var err error
 
 	databaseName := os.Getenv("DATABASE_NAME")

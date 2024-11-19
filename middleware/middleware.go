@@ -3,32 +3,35 @@ package middleware
 import (
 	"net/http"
 
-	lib "github.com/5amCurfew/go-gin-jwt/lib"
+	"github.com/5amCurfew/go-gin-jwt/lib"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
-// JwtAuthMiddleware is a middleware function that handles JWT-based authentication.
+// AdIsminScopeAuth is a middleware function that handles JWT-based authentication.
 // It checks the request for a valid JWT token
 // If valid, the request is passed to the next handler
-func JwtAuthMiddleware() gin.HandlerFunc {
+func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := TokenValid(c)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Unauthorized"})
+		if isValidAdminToken(c) {
+			c.Next()
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return
 		}
-		c.Next()
 	}
 }
 
 // TokenValid checks the validity of the JWT token in the request context.
 // It returns an error if the token is invalid or missing.
-func TokenValid(c *gin.Context) error {
+func isValidAdminToken(c *gin.Context) bool {
 	tokenString := lib.ExtractTokenFromRequest(c)
-	_, err := lib.ParseToken(tokenString)
-	if err != nil {
-		return err
+	token, _ := lib.ParseToken(tokenString)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to gather claims"})
+		return false
 	}
-	return nil
+	return claims["adm"].(bool)
 }

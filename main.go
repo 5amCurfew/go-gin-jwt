@@ -18,7 +18,8 @@ func main() {
 		panic("error parsing .env")
 	}
 
-	models.Connect()
+	// Connect to auth database
+	models.ConnectToAuthDatabase()
 	r := gin.Default()
 	public := r.Group("/api")
 
@@ -32,7 +33,7 @@ func main() {
 	public.POST("/login", ctrl.Login)
 
 	protected := r.Group("/api/admin")
-	protected.Use(middleware.JwtAuthMiddleware())
+	protected.Use(middleware.AdminMiddleware())
 	// curl -X GET localhost:8080/api/admin/token -H "Content-Type: application/json" -H "Content-Type: application/json" -H "Authorization: bearer <TOKEN>" | jq .
 	protected.GET("/token", ctrl.GetTokenInfo)
 
