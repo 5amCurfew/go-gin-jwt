@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-// AdIsminScopeAuth is a middleware function that handles JWT-based authentication.
+// AdminMiddleware is a middleware function that handles JWT-based authentication.
 // It checks the request for a valid JWT token
 // If valid, the request is passed to the next handler
 func AdminMiddleware() gin.HandlerFunc {
