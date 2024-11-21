@@ -21,21 +21,23 @@ func main() {
 	// Connect to auth database
 	models.ConnectToAuthDatabase()
 	r := gin.Default()
-	public := r.Group("/api")
 
+	public := r.Group("/")
+	public.Use(middleware.PublicMiddleware())
 	public.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong 🏓"})
 	})
 
-	// curl -X POST localhost:8080/api/register -H "Content-Type: application/json" -d '{"username": "<USERNAME>", "password": "<PASSWORD>"}'
-	public.POST("/register", ctrl.Register)
-	// curl -X POST localhost:8080/api/login -H "Content-Type: application/json" -d '{"username": "<USERNAME>", "password": "<PASSWORD>"}'
-	public.POST("/login", ctrl.Login)
+	auth := r.Group("/auth")
+	// curl -X POST localhost:8080/auth/register -H "Content-Type: application/json" -d '{"username": "<USERNAME>", "password": "<PASSWORD>"}'
+	auth.POST("/register", ctrl.Register)
+	// curl -X POST localhost:8080/auth/login -H "Content-Type: application/json" -d '{"username": "<USERNAME>", "password": "<PASSWORD>"}'
+	auth.POST("/login", ctrl.Login)
 
-	protected := r.Group("/api/admin")
-	protected.Use(middleware.AdminMiddleware())
-	// curl -X GET localhost:8080/api/admin/token -H "Content-Type: application/json" -H "Content-Type: application/json" -H "Authorization: bearer <TOKEN>" | jq .
-	protected.GET("/token", ctrl.GetTokenInfo)
+	admin := r.Group("/admin")
+	admin.Use(middleware.AdminMiddleware())
+	// curl -X GET localhost:8080/admin/token -H "Content-Type: application/json" -H "Content-Type: application/json" -H "Authorization: bearer <TOKEN>" | jq .
+	admin.GET("/token", ctrl.AdminToken)
 
 	r.Run(":8080")
 }

@@ -30,7 +30,7 @@ func Login(c *gin.Context) {
 
 	token, err := u.Login()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "username or password is incorrect"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

@@ -16,11 +16,22 @@ import (
 // ///////////////////////////////////
 // GET TOKEN INFO
 // ///////////////////////////////////
-func GetTokenInfo(c *gin.Context) {
+func AdminToken(c *gin.Context) {
 	tokenString := lib.ExtractTokenFromRequest(c)
+
+	if tokenString == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing authorization header"})
+		return
+	}
+
 	token, err := lib.ParseToken(tokenString)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !token.Valid {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unauthorized token"})
 		return
 	}
 
@@ -38,16 +49,12 @@ func GetTokenInfo(c *gin.Context) {
 		return
 	}
 
-	if token.Valid {
-		data, _ = json.Marshal(
-			map[string]interface{}{
-				"claims":            claims,
-				"user":              user,
-				"tokenExpirationAt": time.Unix(int64(claims["exp"].(float64)), 0).Format(time.RFC3339),
-			},
-		)
-		c.JSON(http.StatusOK, gin.H{"message": "success", "data": json.RawMessage(data)})
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "unauthorized token"})
-	}
+	data, _ = json.Marshal(
+		map[string]interface{}{
+			"claims":            claims,
+			"user":              user,
+			"tokenExpirationAt": time.Unix(int64(claims["exp"].(float64)), 0).Format(time.RFC3339),
+		},
+	)
+	c.JSON(http.StatusOK, gin.H{"message": "success", "data": json.RawMessage(data)})
 }

@@ -10,8 +10,6 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-// GenerateToken generates a JWT token for the given user ID.
-// userID The ID of the user to generate the token for and returns the generated JWT token as a string, or an error if the token could not be generated.
 func GenerateToken(userID uint, isAdmin bool) (string, error) {
 	lifespan, err := strconv.Atoi(os.Getenv("TOKEN_HOUR_LIFESPAN"))
 	if err != nil {
@@ -19,11 +17,11 @@ func GenerateToken(userID uint, isAdmin bool) (string, error) {
 	}
 
 	claims := jwt.MapClaims{
-		"aut": true,
-		"adm": isAdmin,
-		"sub": userID,
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Hour * time.Duration(lifespan)).Unix(),
+		"iss":   "5am",
+		"sub":   userID,
+		"iat":   time.Now().Unix(),
+		"exp":   time.Now().Add(time.Hour * time.Duration(lifespan)).Unix(),
+		"admin": isAdmin,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
