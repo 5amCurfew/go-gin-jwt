@@ -22,7 +22,17 @@ func PublicMiddleware() gin.HandlerFunc {
 // ///////////////////////////////////
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if isValidAdminToken(c) {
+		var authorised bool = false
+
+		tokenString := lib.ExtractTokenFromRequest(c)
+		token, _ := lib.ParseToken(tokenString)
+
+		if token.Valid {
+			claims, _ := token.Claims.(jwt.MapClaims)
+			authorised = claims["admin"].(bool)
+		}
+
+		if authorised {
 			c.Next()
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized token"})
@@ -30,15 +40,4 @@ func AdminMiddleware() gin.HandlerFunc {
 			return
 		}
 	}
-}
-
-func isValidAdminToken(c *gin.Context) bool {
-	tokenString := lib.ExtractTokenFromRequest(c)
-	token, _ := lib.ParseToken(tokenString)
-	if token.Valid {
-		claims, _ := token.Claims.(jwt.MapClaims)
-		return claims["admin"].(bool)
-	}
-
-	return false
 }

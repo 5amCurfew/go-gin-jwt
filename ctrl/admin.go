@@ -18,22 +18,12 @@ import (
 // ///////////////////////////////////
 func AdminToken(c *gin.Context) {
 	tokenString := lib.ExtractTokenFromRequest(c)
-
 	if tokenString == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing authorization header"})
 		return
 	}
 
-	token, err := lib.ParseToken(tokenString)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if !token.Valid {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "unauthorized token"})
-		return
-	}
+	token, _ := lib.ParseToken(tokenString)
 
 	var data []byte
 	claims, ok := token.Claims.(jwt.MapClaims)
