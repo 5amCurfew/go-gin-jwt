@@ -62,10 +62,21 @@ func (candidate *User) Login() (string, error) {
 // ///////////////////////////////////
 // GET
 // ///////////////////////////////////
-func GetUserByID(uid uint) (User, error) {
+func GetUserByID(uid int) (User, error) {
 	var u User
 	if err := db.First(&u, uid).Error; err != nil {
-		return u, errors.New("user ID not found")
+		return u, errors.New("id not found")
+	}
+
+	u.ClearPassword()
+
+	return u, nil
+}
+
+func GetUserByUsername(username string) (User, error) {
+	var u User
+	if err := db.Where("username = ?", username).First(&u).Error; err != nil {
+		return u, errors.New("usermame not found")
 	}
 
 	u.ClearPassword()

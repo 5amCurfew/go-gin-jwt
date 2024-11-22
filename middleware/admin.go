@@ -8,18 +8,6 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-// ///////////////////////////////////
-// /public/* middleware
-// ///////////////////////////////////
-func PublicMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Next()
-	}
-}
-
-// ///////////////////////////////////
-// /admin/* middleware
-// ///////////////////////////////////
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var authorised bool = false

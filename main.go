@@ -30,14 +30,15 @@ func main() {
 
 	auth := r.Group("/auth")
 	// curl -X POST localhost:8080/auth/register -H "Content-Type: application/json" -d '{"username": "<USERNAME>", "password": "<PASSWORD>"}'
-	auth.POST("/register", ctrl.Register)
+	auth.POST("/register", ctrl.PostAuthRegister)
 	// curl -X POST localhost:8080/auth/login -H "Content-Type: application/json" -d '{"username": "<USERNAME>", "password": "<PASSWORD>"}'
-	auth.POST("/login", ctrl.Login)
+	auth.POST("/login", ctrl.PostAuthLogin)
 
 	admin := r.Group("/admin")
 	admin.Use(middleware.AdminMiddleware())
-	// curl -X GET localhost:8080/admin/token -H "Content-Type: application/json" -H "Content-Type: application/json" -H "Authorization: bearer <TOKEN>" | jq .
-	admin.GET("/token", ctrl.AdminToken)
+	// curl -X GET localhost:8080/admin/user/5am -H "Content-Type: application/json" -H "Content-Type: application/json" -H "Authorization: bearer <TOKEN>" | jq .
+	admin.GET("/user/:identifier", ctrl.GetAdminUser)
+	admin.GET("/token/:token", ctrl.GetAdminToken)
 
 	r.Run(":8080")
 }

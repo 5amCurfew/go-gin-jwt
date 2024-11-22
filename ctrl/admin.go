@@ -2,7 +2,6 @@ package ctrl
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,16 +13,55 @@ import (
 )
 
 // ///////////////////////////////////
-// GET TOKEN INFO
+// GET User information
 // ///////////////////////////////////
-func AdminToken(c *gin.Context) {
-	tokenString := lib.ExtractTokenFromRequest(c)
-	if tokenString == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing authorization header"})
+func GetAdminUser(c *gin.Context) {
+	if c.Param("identifier") == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user id or username required"})
 		return
 	}
 
-	token, _ := lib.ParseToken(tokenString)
+	var data []byte
+	var user models.User
+
+	identifier := c.Param("identifier")
+
+	id, err := strconv.Atoi(identifier)
+
+	if err != nil {
+		user, err = models.GetUserByUsername(identifier)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		data, _ = json.Marshal(user)
+
+		c.JSON(http.StatusOK, gin.H{"message": "success", "data": json.RawMessage(data)})
+		return
+	}
+
+	user, err = models.GetUserByID(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	data, _ = json.Marshal(user)
+
+	c.JSON(http.StatusOK, gin.H{"message": "success", "data": json.RawMessage(data)})
+}
+
+// ///////////////////////////////////
+// GET Token information
+// ///////////////////////////////////
+func GetAdminToken(c *gin.Context) {
+	if c.Param("token") == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user id or username required"})
+		return
+	}
+
+	token, _ := lib.ParseToken(c.Param("token"))
 
 	var data []byte
 	claims, ok := token.Claims.(jwt.MapClaims)
@@ -32,8 +70,7 @@ func AdminToken(c *gin.Context) {
 		return
 	}
 
-	userID, _ := strconv.ParseUint(fmt.Sprintf("%.0f", claims["sub"]), 10, 32)
-	user, err := models.GetUserByID(uint(userID))
+	user, err := models.GetUserByID(int(claims["sub"].(float64)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -42,8 +79,9 @@ func AdminToken(c *gin.Context) {
 	data, _ = json.Marshal(
 		map[string]interface{}{
 			"claims":            claims,
-			"user":              user,
+			"token":             c.Param("token"),
 			"tokenExpirationAt": time.Unix(int64(claims["exp"].(float64)), 0).Format(time.RFC3339),
+			"user":              user,
 		},
 	)
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": json.RawMessage(data)})
