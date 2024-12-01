@@ -2,6 +2,7 @@ package ctrl
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,12 +13,10 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-// ///////////////////////////////////
-// GET User information
-// ///////////////////////////////////
-func GetAdminUser(c *gin.Context) {
+// admin/user/:identifier route
+func GetUser(c *gin.Context) {
 	if c.Param("identifier") == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user id or username required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user email or username required"})
 		return
 	}
 
@@ -29,7 +28,7 @@ func GetAdminUser(c *gin.Context) {
 	id, err := strconv.Atoi(identifier)
 
 	if err != nil {
-		user, err = models.GetUserByUsername(identifier)
+		user, err = GetUserByEmail(identifier)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -41,7 +40,7 @@ func GetAdminUser(c *gin.Context) {
 		return
 	}
 
-	user, err = models.GetUserByID(id)
+	user, err = GetUserByID(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -52,12 +51,10 @@ func GetAdminUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": json.RawMessage(data)})
 }
 
-// ///////////////////////////////////
-// GET Token information
-// ///////////////////////////////////
-func GetAdminToken(c *gin.Context) {
+// admin/token/:token route
+func GetToken(c *gin.Context) {
 	if c.Param("token") == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user id or username required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "token required"})
 		return
 	}
 
@@ -70,7 +67,7 @@ func GetAdminToken(c *gin.Context) {
 		return
 	}
 
-	user, err := models.GetUserByID(int(claims["sub"].(float64)))
+	user, err := GetUserByID(int(claims["sub"].(float64)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -80,9 +77,34 @@ func GetAdminToken(c *gin.Context) {
 		map[string]interface{}{
 			"claims":            claims,
 			"token":             c.Param("token"),
+			"tokenIssuedAt":     time.Unix(int64(claims["iat"].(float64)), 0).Format(time.RFC3339),
 			"tokenExpirationAt": time.Unix(int64(claims["exp"].(float64)), 0).Format(time.RFC3339),
 			"user":              user,
 		},
 	)
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": json.RawMessage(data)})
+}
+
+// Get first user (by ID)
+func GetUserByID(uid int) (models.User, error) {
+	var u models.User
+	if err := models.DB.First(&u, uid).Error; err != nil {
+		return u, errors.New("user id not found")
+	}
+
+	u.ClearPassword()
+
+	return u, nil
+}
+
+// Get first user (by username)
+func GetUserByEmail(email string) (models.User, error) {
+	var u models.User
+	if err := models.DB.Where("email = ?", email).First(&u).Error; err != nil {
+		return u, errors.New("user email not found")
+	}
+
+	u.ClearPassword()
+
+	return u, nil
 }

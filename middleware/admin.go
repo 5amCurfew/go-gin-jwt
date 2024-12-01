@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+// Check if token is authorised for admin routes
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var authorised bool = false
@@ -17,7 +18,7 @@ func AdminMiddleware() gin.HandlerFunc {
 
 		if token.Valid {
 			claims, _ := token.Claims.(jwt.MapClaims)
-			authorised = claims["admin"].(bool)
+			authorised = claims["adm"].(bool)
 		}
 
 		if authorised {

@@ -22,23 +22,24 @@ func main() {
 	models.ConnectToAuthDatabase()
 	r := gin.Default()
 
+	// public routes
 	public := r.Group("/")
 	public.Use(middleware.PublicMiddleware())
 	public.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong 🏓"})
 	})
 
+	// auth routes
 	auth := r.Group("/auth")
-	// curl -X POST localhost:8080/auth/register -H "Content-Type: application/json" -d '{"username": "<USERNAME>", "password": "<PASSWORD>"}'
-	auth.POST("/register", ctrl.PostAuthRegister)
-	// curl -X POST localhost:8080/auth/login -H "Content-Type: application/json" -d '{"username": "<USERNAME>", "password": "<PASSWORD>"}'
-	auth.POST("/login", ctrl.PostAuthLogin)
+	auth.Use(middleware.AuthMiddleware())
+	auth.POST("/register", ctrl.AuthRegister)
+	auth.POST("/login", ctrl.AuthLogin)
 
+	// admin routes
 	admin := r.Group("/admin")
 	admin.Use(middleware.AdminMiddleware())
-	// curl -X GET localhost:8080/admin/user/5am -H "Content-Type: application/json" -H "Content-Type: application/json" -H "Authorization: bearer <TOKEN>" | jq .
-	admin.GET("/user/:identifier", ctrl.GetAdminUser)
-	admin.GET("/token/:token", ctrl.GetAdminToken)
+	admin.GET("/user/:identifier", ctrl.GetUser)
+	admin.GET("/token/:token", ctrl.GetToken)
 
 	r.Run(":8080")
 }

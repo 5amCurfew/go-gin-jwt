@@ -1,87 +1,60 @@
 package models
 
 import (
-	"errors"
 	"html"
 	"strings"
 
-	lib "github.com/5amCurfew/go-gin-jwt/lib"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-// ///////////////////////////////////
-// USER
-// ///////////////////////////////////
+// User model
 type User struct {
 	gorm.Model
-	Username string `gorm:"size:255;not null;unique" json:"username"`
+	Email    string `gorm:"size:255;not null;unique" json:"email"`
 	Password string `gorm:"size:255;not null;" json:"password"`
 	IsAdmin  bool   `gorm:"default:false" json:"is_admin"`
 }
 
+// Authenticate user comparing candidate password with recorded (hashed) password
+func (candidate *User) Login() (bool, error) {
+	u := User{}
+	err := DB.Model(User{}).Where("email = ?", candidate.Email).Take(&u).Error
+	if err != nil {
+		return false, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(candidate.Password), []byte(u.Password))
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		return false, err
+	}
+
+	*candidate = u
+	u.ClearPassword()
+
+	return true, nil
+}
+
+// Create a User record
 func (u *User) Register() (*User, error) {
-	err := db.Create(&u).Error
+	err := DB.Create(&u).Error
 	if err != nil {
 		return &User{}, err
 	}
 	return u, nil
 }
 
-// BeforeCreate Hook (refer to gorm docs)
+// User BeforeCreate Hook (refer to gorm docs)
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	u.Username = html.EscapeString(strings.TrimSpace(u.Username))
+	u.Email = html.EscapeString(strings.TrimSpace(u.Email))
 	u.Password = string(hashedPassword)
 
 	return nil
-}
-
-// ///////////////////////////////////
-// USER LOGIN
-// ///////////////////////////////////
-func (candidate *User) Login() (string, error) {
-	u := User{}
-	err := db.Model(User{}).Where("username = ?", candidate.Username).Take(&u).Error
-	if err != nil {
-		return "", err
-	}
-
-	err = lib.VerifyPassword(candidate.Password, u.Password)
-	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		return "", err
-	}
-
-	return lib.GenerateToken(u.ID, u.IsAdmin)
-}
-
-// ///////////////////////////////////
-// GET
-// ///////////////////////////////////
-func GetUserByID(uid int) (User, error) {
-	var u User
-	if err := db.First(&u, uid).Error; err != nil {
-		return u, errors.New("id not found")
-	}
-
-	u.ClearPassword()
-
-	return u, nil
-}
-
-func GetUserByUsername(username string) (User, error) {
-	var u User
-	if err := db.Where("username = ?", username).First(&u).Error; err != nil {
-		return u, errors.New("usermame not found")
-	}
-
-	u.ClearPassword()
-
-	return u, nil
 }
 
 func (u *User) ClearPassword() {

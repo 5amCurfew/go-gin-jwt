@@ -9,18 +9,19 @@ import (
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+var DB *gorm.DB
 
+// Connect
 func ConnectToAuthDatabase() {
 	var err error
 
 	databaseName := os.Getenv("DATABASE_NAME")
-	db, err = gorm.Open(sqlite.Open(databaseName), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open(databaseName), &gorm.Config{})
 	if err != nil {
 		log.Fatalln(fmt.Sprintf("failed to connect database %s", databaseName))
 	} else {
 		log.Infof("%s connection successful", databaseName)
 	}
 
-	db.AutoMigrate(&User{})
+	DB.AutoMigrate(&User{})
 }

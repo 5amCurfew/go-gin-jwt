@@ -7,15 +7,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ///////////////////////////////////
-// REGISTER
-// ///////////////////////////////////
+// Register input model
 type RegisterInput struct {
-	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-func PostAuthRegister(c *gin.Context) {
+// auth/register route
+func AuthRegister(c *gin.Context) {
 	var input RegisterInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -24,7 +23,7 @@ func PostAuthRegister(c *gin.Context) {
 	}
 
 	candidate := models.User{
-		Username: input.Username,
+		Email:    input.Email,
 		Password: input.Password,
 	}
 
