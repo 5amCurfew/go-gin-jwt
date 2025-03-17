@@ -16,7 +16,7 @@ import (
 // admin/user/:identifier route
 func GetUser(c *gin.Context) {
 	if c.Param("identifier") == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user email or username required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user email or ID required"})
 		return
 	}
 
